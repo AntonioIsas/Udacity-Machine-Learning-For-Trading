@@ -51,6 +51,14 @@ def sharpe(daily_returns):
     s = math.sqrt(252)*(daily_returns.mean()/daily_returns.std())
     return s
 
+
+def minimize(allocations, prices):
+    port_val = portfolio_value(prices, allocations)
+    daily_return = daily_returns(port_val)
+    s = sharpe(daily_return)
+    return -s
+
+
 # This is the function that will be tested by the autograder
 # The student must update this code to properly implement the functionality
 def optimize_portfolio(sd=dt.datetime(2008,1,1), ed=dt.datetime(2009,1,1),
@@ -65,7 +73,12 @@ def optimize_portfolio(sd=dt.datetime(2008,1,1), ed=dt.datetime(2009,1,1),
 
     # find the allocations for the optimal portfolio  		   	  			    		  		  		    	 		 		   		 		  
     # note that the values here ARE NOT meant to be correct for a test case  		   	  			    		  		  		    	 		 		   		 		  
-    allocs = np.asarray([0.35, 0.35, 0.10, 0.10, 0.10]) # add code here to find the allocations
+    # allocs = np.asarray([0.35, 0.35, 0.10, 0.10, 0.10]) # add code here to find the allocations
+    allocs = spo.minimize(minimize, np.random.dirichlet(np.ones(prices.shape[1])), args=(prices,), method="SLSQP",
+                          bounds=((0,1),)*prices.shape[1],
+                          constraints=(
+                              {'type':'eq', 'fun': lambda x:  x.sum()-1}
+                          ))["x"]
 
     # Get daily portfolio value
     # port_val = prices_SPY  # add code here to compute daily portfolio values
@@ -96,8 +109,8 @@ def test_code():
     # Note that ALL of these values will be set to different values by  		   	  			    		  		  		    	 		 		   		 		  
     # the autograder!  		   	  			    		  		  		    	 		 		   		 		  
 
-    start_date = dt.datetime(2009, 1, 1)
-    end_date = dt.datetime(2010, 1, 1)
+    start_date = dt.datetime(2008, 1, 1)
+    end_date = dt.datetime(2009, 1, 1)
     symbols = ['GOOG', 'AAPL', 'GLD', 'XOM', 'IBM']
 
     # Assess the portfolio
